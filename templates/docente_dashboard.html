@@ -1,0 +1,235 @@
+{% extends "docente_base.html" %}
+
+{% block contenido %}
+<div class="flex flex-wrap justify-between gap-3 mb-6">
+  <div class="flex flex-col gap-1">
+    <h1 class="text-3xl font-black leading-tight tracking-[-0.033em] text-text-light dark:text-text-dark">
+      Panel de Control
+    </h1>
+    <p class="text-gray-500 dark:text-gray-400 text-base font-normal leading-normal">
+      Bienvenido/a, Profesor/a {{ nombre }}
+    </p>
+  </div>
+</div>
+
+<!-- Tarjetas resumen -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+  <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+    <p class="text-base font-medium text-gray-600 dark:text-gray-300">Estudiantes Activos</p>
+    <p class="text-3xl font-bold leading-tight text-primary">{{ total_estudiantes }}</p>
+  </div>
+  <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+    <p class="text-base font-medium text-gray-600 dark:text-gray-300">Progreso Alto</p>
+    <p class="text-3xl font-bold leading-tight text-secondary">{{ porc_avanzado }}%</p>
+  </div>
+  <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+    <p class="text-base font-medium text-gray-600 dark:text-gray-300">Necesitan Ayuda</p>
+    <p class="text-3xl font-bold leading-tight text-accent">{{ porc_necesita_ayuda }}%</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <!-- Acceso rápido -->
+  <div class="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+    <h3 class="text-lg font-bold mb-4">Acceso Rápido</h3>
+    <div class="space-y-4">
+      <!-- Gestionar mis Salones -->
+      <a
+        href="{{ url_for('salones.gestion_salones') }}"
+        class="w-full flex items-center gap-3 p-4 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors"
+      >
+        <span class="material-symbols-outlined">class</span>
+        <span>Gestionar mis Salones</span>
+      </a>
+
+      <!-- Ver Temario de Álgebra -->
+      <a
+        href="{{ url_for('temas.gestion_temas') }}"
+        class="w-full flex items-center gap-3 p-4 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors"
+      >
+        <span class="material-symbols-outlined">menu_book</span>
+        <span>Ver Temario de Álgebra</span>
+      </a>
+
+      <!-- Asignar Actividad (ir a gestión de ejercicios) -->
+      <a
+        href="{{ url_for('ejercicios.gestion_ejercicios') }}"
+        class="w-full flex items-center gap-3 p-4 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors"
+      >
+        <span class="material-symbols-outlined">calculate</span>
+        <span>Asignar Actividad</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Donut -->
+  <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+    <h3 class="text-lg font-bold mb-4">Progreso General de los Estudiantes</h3>
+    <div class="flex items-center justify-center">
+      <div class="relative w-64 h-64">
+        <svg class="w-full h-full" viewBox="0 0 36 36">
+          <!-- fondo -->
+          <path class="stroke-current text-gray-200 dark:text-gray-700"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" stroke-width="3"></path>
+
+          <!-- Avanzado -->
+          <path class="stroke-current text-secondary"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke-dasharray="{{ porc_avanzado }}, 100"
+                stroke-linecap="round"
+                stroke-width="3"></path>
+
+          <!-- En progreso -->
+          <path class="stroke-current text-primary"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke-dasharray="{{ porc_en_progreso }}, 100"
+                stroke-dashoffset="-{{ offset_progreso }}"
+                stroke-linecap="round"
+                stroke-width="3"></path>
+
+          <!-- Necesita ayuda -->
+          <path class="stroke-current text-accent"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke-dasharray="{{ porc_necesita_ayuda }}, 100"
+                stroke-dashoffset="-{{ offset_ayuda }}"
+                stroke-linecap="round"
+                stroke-width="3"></path>
+        </svg>
+
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-3xl font-bold">{{ total_estudiantes }}</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Estudiantes</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-center gap-6 mt-4 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-secondary"></span>
+        <span>Avanzado ({{ porc_avanzado }}%)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-primary"></span>
+        <span>En Progreso ({{ porc_en_progreso }}%)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-accent"></span>
+        <span>Necesita Ayuda ({{ porc_necesita_ayuda }}%)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Salones y rendimiento por tema -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <!-- Salones con mayor actividad -->
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+    <h3 class="text-lg font-bold mb-4">Salones con Mayor Actividad</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+        <tr class="border-b dark:border-gray-700">
+          <th class="py-3 px-4 font-semibold text-sm">Salón</th>
+          <th class="py-3 px-4 font-semibold text-sm">Nº de Estudiantes</th>
+          <th class="py-3 px-4 font-semibold text-sm">Progreso Promedio</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for sal in salones %}
+          <tr class="border-b dark:border-gray-700">
+            <td class="py-3 px-4">{{ sal.salon }}</td>
+            <td class="py-3 px-4">{{ sal.num_estudiantes }}</td>
+            <td class="py-3 px-4 text-secondary font-bold">{{ sal.progreso_promedio }}%</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="3" class="py-3 px-4 text-sm text-gray-500">
+              Todavía no hay salones registrados para este docente.
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Rendimiento promedio por tema -->
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+    <h3 class="text-lg font-bold mb-4">Rendimiento Promedio por Tema</h3>
+
+    {% if temas %}
+      <div class="space-y-4">
+        {% for t in temas %}
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+              {{ t.nombre_tema or t.area }}
+            </span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+              {{ t.porcentaje }}%
+            </span>
+          </div>
+
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+            <div
+              class="bg-primary h-2.5 rounded-full barra-tema"
+              data-porcentaje="{{ t.porcentaje }}"
+              style="width: 0%;"
+            ></div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-gray-500">
+        Todavía no hay datos de rendimiento por tema.
+      </p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Estudiantes que requieren atención -->
+<div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+  <h3 class="text-lg font-bold mb-4 text-accent">Estudiantes que Requieren Atención</h3>
+  {% if estudiantes_atencion %}
+    <ul class="space-y-3">
+      {% for est in estudiantes_atencion %}
+        <li class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+          <div>
+            <p class="font-semibold">{{ est.nombre_completo }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Dificultad en: {{ est.dificultad }}
+            </p>
+          </div>
+          <a
+            class="text-primary font-bold text-sm hover:underline"
+            href="{{ url_for('reportes.reporte_progreso',
+                             id_estudiante=est.id_estudiante,
+                             id_salon=est.id_salon) }}"
+          >
+            Ver Perfil
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-gray-500">
+      Por ahora no hay estudiantes en nivel de "necesita ayuda".
+    </p>
+  {% endif %}
+</div>
+
+<!-- Script para ajustar el ancho de las barras de temas -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.barra-tema').forEach(function (el) {
+      var raw = parseFloat(el.getAttribute('data-porcentaje') || '0');
+      if (isNaN(raw)) raw = 0;
+      var pct = Math.max(0, Math.min(100, raw)); // clamp 0–100
+      el.style.width = pct + '%';
+    });
+  });
+</script>
+{% endblock %}

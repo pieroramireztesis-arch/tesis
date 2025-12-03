@@ -1,0 +1,305 @@
+{% extends "docente_base.html" %}
+
+{% block title %}Gestión de Ejercicios{% endblock %}
+
+{% block contenido %}
+
+<div class="flex flex-col gap-6">
+
+  <!-- Título -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-black leading-tight tracking-[-0.03em]">
+        Administrar Banco de Ejercicios
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Añade, edita y organiza los ejercicios de álgebra para tus alumnos.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- LISTADO -->
+    <div class="lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-6">
+
+      <!-- Buscador + filtro en combo -->
+      <div class="flex flex-col lg:flex-row lg:items-center gap-4 mb-5">
+        <!-- Buscador (largo) -->
+        <div class="flex-1 min-w-[260px]">
+          <label class="flex flex-col w-full h-11">
+            <div class="flex w-full flex-1 items-center rounded-lg h-full bg-gray-100 dark:bg-gray-800 px-3">
+              <span class="material-symbols-outlined text-gray-500 mr-2">search</span>
+              <input
+                id="buscador-ejercicios"
+                type="text"
+                placeholder="Buscar ejercicios por palabra clave..."
+                class="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+              />
+            </div>
+          </label>
+        </div>
+
+        <!-- Filtro por competencia (select) -->
+        <div class="w-full lg:w-64">
+          <label class="block text-xs font-medium text-gray-500 mb-1">
+            Filtrar por competencia
+          </label>
+          <select
+            id="filtro-competencia"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-gray-900/60 px-3 py-2 text-sm text-gray-800 dark:text-gray-100"
+          >
+            <option value="all">Todas las competencias</option>
+            {% for c in competencias %}
+              <option value="{{ c.id_competencia }}">{{ c.area }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/40">
+            <tr>
+              <th class="px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Ejercicio</th>
+              <th class="px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Competencia</th>
+              <th class="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-ejercicios">
+            {% if ejercicios %}
+              {% for e in ejercicios %}
+              <tr
+                class="border-b last:border-b-0 border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/60 transition-colors"
+                data-row-ejercicio
+                data-id-comp="{{ e.id_competencia }}"
+                data-texto="{{ (e.descripcion ~ ' ' ~ e.nombre_competencia)|lower }}"
+              >
+                <td class="px-4 py-3 max-w-xs">
+                  <p class="text-gray-900 dark:text-gray-100 truncate">
+                    {{ e.descripcion }}
+                  </p>
+                </td>
+                <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
+                  {{ e.nombre_competencia }}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <div class="inline-flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="text-sm text-blue-600 hover:underline"
+                      data-accion="editar-ejercicio"
+                      data-id-ejercicio="{{ e.id_ejercicio }}"
+                    >
+                      Editar
+                    </button>
+                    <form
+                      action="{{ url_for('ejercicios.eliminar_ejercicio', id_ejercicio=e.id_ejercicio) }}"
+                      method="post"
+                      class="inline"
+                      onsubmit="return confirm('¿Seguro que deseas eliminar este ejercicio?');"
+                    >
+                      <button type="submit" class="text-sm text-red-600 hover:underline">
+                        Eliminar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="3" class="px-4 py-5 text-center text-gray-500 dark:text-gray-400">
+                  Aún no has registrado ejercicios.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORMULARIO LATERAL (NUEVO/EDICIÓN SIMPLE) -->
+    <div class="lg:col-span-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-6">
+      <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">
+        Añadir / Editar Ejercicio Rápido
+      </h3>
+
+      <form id="form-ejercicio-rapido" method="post" action="{{ url_for('ejercicios.crear_ejercicio') }}" enctype="multipart/form-data" class="space-y-4">
+        <input type="hidden" name="id_ejercicio" id="rapido-id-ejercicio"/>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Enunciado del ejercicio
+          </label>
+          <textarea
+            name="descripcion"
+            id="rapido-descripcion"
+            rows="4"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-gray-900/60 px-3 py-2 text-sm"
+            placeholder="Escribe aquí la pregunta del ejercicio..."
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Competencia asociada
+          </label>
+          <select
+            name="id_competencia"
+            id="rapido-id-competencia"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-gray-900/60 px-3 py-2 text-sm"
+          >
+            <option value="">Selecciona una competencia</option>
+            {% for c in competencias %}
+              <option value="{{ c.id_competencia }}">{{ c.area }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Opciones básicas A–D -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Opciones y respuesta correcta
+          </label>
+          <div class="space-y-2">
+            {% for letra in ["A","B","C","D"] %}
+            <div class="flex items-center gap-2">
+              <input
+                type="radio"
+                name="opcion_correcta"
+                value="{{ letra }}"
+                class="h-4 w-4 text-blue-600 border-gray-300"
+              />
+              <span class="w-5 text-sm font-semibold text-gray-700 dark:text-gray-300">{{ letra }}.</span>
+              <input
+                type="text"
+                name="opcion_{{ letra }}"
+                placeholder="Opción {{ letra }}"
+                class="flex-1 rounded-md border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-gray-900/60 px-2 py-1.5 text-sm"
+              />
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- ✅ PISTA DEL EJERCICIO -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Pista del ejercicio (se mostrará al estudiante si falla la primera vez)
+          </label>
+          <textarea
+            name="pista"
+            id="rapido-pista"
+            rows="3"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-gray-900/60 px-3 py-2 text-sm"
+            placeholder="Ejemplo: Recuerda que para calcular el promedio debes sumar todos los valores y dividir entre la cantidad de datos."
+          ></textarea>
+        </div>
+
+        <!-- Imagen opcional -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Imagen de apoyo (opcional)
+          </label>
+          <input
+            type="file"
+            name="imagen_ejercicio"
+            accept="image/*"
+            class="block w-full text-sm text-gray-600 dark:text-gray-300
+                   file:mr-3 file:py-1.5 file:px-3 file:rounded-md
+                   file:border-0 file:text-sm file:font-semibold
+                   file:bg-blue-50 file:text-blue-700
+                   hover:file:bg-blue-100"
+          />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            id="btn-limpiar-rapido"
+            class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900"
+          >
+            Limpiar
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+          >
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const buscador = document.getElementById("buscador-ejercicios");
+  const filtroComp = document.getElementById("filtro-competencia");
+  const filas = document.querySelectorAll("[data-row-ejercicio]");
+
+  function aplicarFiltros() {
+    const texto = (buscador?.value || "").toLowerCase();
+    const compActiva = filtroComp ? filtroComp.value : "all";
+
+    filas.forEach(row => {
+      const t = row.dataset.texto || "";
+      const comp = row.dataset.idComp;
+      const coincideTexto = t.includes(texto);
+      const coincideComp = (compActiva === "all") || (compActiva === String(comp));
+      row.style.display = (coincideTexto && coincideComp) ? "" : "none";
+    });
+  }
+
+  buscador?.addEventListener("input", aplicarFiltros);
+  filtroComp?.addEventListener("change", aplicarFiltros);
+
+  // ---- FORM RÁPIDO: LIMPIAR ----
+  document.getElementById("btn-limpiar-rapido")?.addEventListener("click", () => {
+    document.getElementById("rapido-id-ejercicio").value = "";
+    document.getElementById("rapido-descripcion").value = "";
+    document.getElementById("rapido-id-competencia").value = "";
+    document.getElementById("rapido-pista").value = "";
+    document.querySelectorAll("input[name^='opcion_']").forEach(i => i.value = "");
+    document.querySelectorAll("input[name='opcion_correcta']").forEach(r => r.checked = false);
+  });
+
+  // ---- EDITAR: cargar datos en el formulario ----
+  const urlDetalleBase = "{{ url_for('ejercicios.detalle_ejercicio_json', id_ejercicio=0) }}";
+
+  document.querySelectorAll("[data-accion='editar-ejercicio']").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.idEjercicio;
+      const url = urlDetalleBase.replace("0", id);
+
+      fetch(url)
+        .then(resp => resp.json())
+        .then(data => {
+          if (data.error) {
+            alert("No se pudo cargar el ejercicio.");
+            return;
+          }
+
+          document.getElementById("rapido-id-ejercicio").value = data.id_ejercicio;
+          document.getElementById("rapido-descripcion").value = data.descripcion || "";
+          document.getElementById("rapido-id-competencia").value = data.id_competencia || "";
+          document.getElementById("rapido-pista").value = data.pista || "";
+
+          // limpiar opciones y radio
+          document.querySelectorAll("input[name^='opcion_']").forEach(i => i.value = "");
+          document.querySelectorAll("input[name='opcion_correcta']").forEach(r => {
+            r.checked = (data.respuesta_correcta && r.value === data.respuesta_correcta);
+          });
+
+          document.getElementById("form-ejercicio-rapido")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        })
+        .catch(() => {
+          alert("Error al comunicarse con el servidor.");
+        });
+    });
+  });
+</script>
+
+{% endblock %}

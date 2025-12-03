@@ -1,0 +1,299 @@
+{% extends "docente_base.html" %}
+
+{% block title %}Gestión de Salones{% endblock %}
+
+{% block contenido %}
+<div class="flex flex-col gap-6">
+
+  <!-- Título + botones -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-3xl font-black leading-tight tracking-[-0.03em]">
+      Administración de Salones
+    </h1>
+
+    <div class="flex flex-wrap gap-2">
+      <!-- Botón UNIRSE A SALÓN -->
+      <button
+        type="button"
+        id="btn-abrir-modal-unirse"
+        class="flex items-center gap-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-semibold px-4 py-2 shadow-sm"
+      >
+        <span class="material-symbols-outlined text-base">group_add</span>
+        <span>Unirse a salón</span>
+      </button>
+
+      <!-- Botón CREAR SALÓN -->
+      <button
+        type="button"
+        id="btn-abrir-modal-salon"
+        class="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 shadow-sm"
+      >
+        <span class="material-symbols-outlined text-base">add</span>
+        <span>Crear salón</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de salones -->
+  <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-x-auto">
+    <table class="w-full text-sm text-left">
+      <thead class="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/40">
+        <tr>
+          <th class="px-6 py-3 font-medium text-gray-600 dark:text-gray-300">Nombre del salón</th>
+          <th class="px-6 py-3 font-medium text-gray-600 dark:text-gray-300">Grado</th>
+          <th class="px-6 py-3 font-medium text-gray-600 dark:text-gray-300">Estudiantes</th>
+          <th class="px-6 py-3 font-medium text-gray-600 dark:text-gray-300 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if salones %}
+          {% for s in salones %}
+          <tr class="border-b last:border-b-0 border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/60 transition-colors">
+            <td class="px-6 py-3">
+              <p class="font-medium text-gray-900 dark:text-gray-100">{{ s.nombre_salon }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Código: {{ s.id_salon }}
+              </p>
+            </td>
+            <td class="px-6 py-3 text-gray-700 dark:text-gray-300">
+              {{ s.grado }}
+            </td>
+            <td class="px-6 py-3 text-gray-700 dark:text-gray-300">
+              {{ s.num_estudiantes }}
+            </td>
+            <td class="px-6 py-3 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <!-- Editar -->
+                <button
+                  type="button"
+                  class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                  data-accion="editar-salon"
+                  data-id-salon="{{ s.id_salon }}"
+                  data-nombre="{{ s.nombre_salon }}"
+                  data-grado="{{ s.grado }}"
+                >
+                  <span class="material-symbols-outlined text-base text-gray-700 dark:text-gray-300">
+                    edit
+                  </span>
+                </button>
+
+                <!-- Eliminar -->
+                <form
+                  action="{{ url_for('salones.eliminar_salon', id_salon=s.id_salon) }}"
+                  method="post"
+                  class="inline"
+                  onsubmit="return confirm('¿Seguro que deseas eliminar este salón? Esto desvinculará a los estudiantes de este salón.');"
+                >
+                  <button
+                    type="submit"
+                    class="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/40"
+                  >
+                    <span class="material-symbols-outlined text-base text-red-600">
+                      delete
+                    </span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="4" class="px-6 py-6 text-center text-gray-500 dark:text-gray-400">
+              Aún no tienes salones registrados.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============= MODAL NUEVO / EDITAR SALÓN ============= -->
+<div
+  id="modal-salon-backdrop"
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-40 flex items-center justify-center"
+>
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 relative">
+    <h2 id="modal-salon-titulo" class="text-lg font-bold mb-4">
+      Crear nuevo salón
+    </h2>
+
+    <form id="form-salon" method="post" action="{{ url_for('salones.crear_salon') }}" class="space-y-4">
+      <input type="hidden" name="id_salon" id="form-id-salon" />
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Nombre del salón
+        </label>
+        <input
+          type="text"
+          name="nombre_salon"
+          id="form-nombre-salon"
+          required
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Grado
+        </label>
+        <input
+          type="text"
+          name="grado"
+          id="form-grado-salon"
+          required
+          placeholder="Ej: 3ro A"
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-cerrar-modal-salon"
+          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+        >
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============= MODAL UNIRSE A SALÓN (CON LISTA) ============= -->
+<div
+  id="modal-unirse-backdrop"
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-40 flex items-center justify-center"
+>
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 relative">
+    <h2 class="text-lg font-bold mb-4">
+      Unirse a un salón existente
+    </h2>
+
+    <form method="post" action="{{ url_for('salones.unirse_salon') }}" class="space-y-4">
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Selecciona un salón
+        </label>
+
+        <select
+          name="id_salon"
+          id="select-salon-unirse"
+          required
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
+        >
+          <option value="">-- Selecciona un salón --</option>
+          {% if salones_disponibles %}
+            {% for s in salones_disponibles %}
+            <option value="{{ s.id_salon }}">
+              {{ s.nombre_salon }} – {{ s.grado }} (ID {{ s.id_salon }})
+            </option>
+            {% endfor %}
+          {% else %}
+            <option value="">No hay salones disponibles para unirse.</option>
+          {% endif %}
+        </select>
+
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Solo se muestran los salones a los que aún no estás asignado.
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-cerrar-modal-unirse"
+          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+          {% if not salones_disponibles %}disabled class="opacity-60 cursor-not-allowed"{% endif %}
+        >
+          Unirse
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // ---------- Modal CREAR / EDITAR ----------
+  const backdropSalon = document.getElementById("modal-salon-backdrop");
+  const tituloSalon   = document.getElementById("modal-salon-titulo");
+  const formSalon     = document.getElementById("form-salon");
+
+  const campoIdSalon  = document.getElementById("form-id-salon");
+  const campoNombreS  = document.getElementById("form-nombre-salon");
+  const campoGradoS   = document.getElementById("form-grado-salon");
+
+  function abrirModalNuevoSalon() {
+    tituloSalon.textContent = "Crear nuevo salón";
+    formSalon.action = "{{ url_for('salones.crear_salon') }}";
+    campoIdSalon.value = "";
+    campoNombreS.value = "";
+    campoGradoS.value = "";
+    backdropSalon.classList.remove("hidden");
+  }
+
+  function abrirModalEditarSalon(btn) {
+    const idSalon = btn.dataset.idSalon;
+    const nombre  = btn.dataset.nombre;
+    const grado   = btn.dataset.grado;
+
+    tituloSalon.textContent = "Editar salón";
+    campoIdSalon.value = idSalon;
+    campoNombreS.value = nombre;
+    campoGradoS.value = grado;
+
+    formSalon.action = "{{ url_for('salones.editar_salon', id_salon=0) }}".replace("0", idSalon);
+
+    backdropSalon.classList.remove("hidden");
+  }
+
+  document.getElementById("btn-abrir-modal-salon")
+    ?.addEventListener("click", abrirModalNuevoSalon);
+
+  document.getElementById("btn-cerrar-modal-salon")
+    ?.addEventListener("click", () => backdropSalon.classList.add("hidden"));
+
+  backdropSalon.addEventListener("click", (e) => {
+    if (e.target === backdropSalon) {
+      backdropSalon.classList.add("hidden");
+    }
+  });
+
+  document.querySelectorAll("[data-accion='editar-salon']").forEach((btn) => {
+    btn.addEventListener("click", () => abrirModalEditarSalon(btn));
+  });
+
+  // ---------- Modal UNIRSE A SALÓN ----------
+  const backdropUnirse   = document.getElementById("modal-unirse-backdrop");
+  const btnAbrirUnirse   = document.getElementById("btn-abrir-modal-unirse");
+  const btnCerrarUnirse  = document.getElementById("btn-cerrar-modal-unirse");
+
+  btnAbrirUnirse?.addEventListener("click", () => {
+    backdropUnirse.classList.remove("hidden");
+  });
+
+  btnCerrarUnirse?.addEventListener("click", () => {
+    backdropUnirse.classList.add("hidden");
+  });
+
+  backdropUnirse.addEventListener("click", (e) => {
+    if (e.target === backdropUnirse) {
+      backdropUnirse.classList.add("hidden");
+    }
+  });
+</script>
+{% endblock %}

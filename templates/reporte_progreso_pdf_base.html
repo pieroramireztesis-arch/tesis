@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Reporte de progreso - {{ nombre_est }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    h1 { font-size: 18px; margin-bottom: 4px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+    th, td { border: 1px solid #ccc; padding: 4px 6px; }
+    th { background: #f3f3f3; }
+  </style>
+</head>
+<body>
+  <h1>Reporte de progreso del estudiante</h1>
+  <p><strong>Estudiante:</strong> {{ nombre_est }}</p>
+  <p><strong>Progreso general:</strong> {{ progreso_general }}%</p>
+
+  <h2>Historial de ejercicios</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Ejercicio</th>
+        <th>Respuesta estudiante</th>
+        <th>Respuesta correcta</th>
+        <th>Puntaje</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in historial %}
+      <tr>
+        <td>{{ h.fecha }}</td>
+        <td>{{ h.actividad }}</td>
+        <td>{{ h.respuesta_estudiante or "-" }}</td>
+        <td>{{ h.respuesta_correcta or "-" }}</td>
+        <td>{{ h.puntaje }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

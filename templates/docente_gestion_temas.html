@@ -1,0 +1,557 @@
+{% extends "docente_base.html" %}
+
+{% block title %}Gestión de Temas de Álgebra{% endblock %}
+
+{% block contenido %}
+<div class="flex flex-col gap-6">
+
+  <!-- Título + botón -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-3xl font-black leading-tight tracking-[-0.03em]">
+      Gestión de Temas de Álgebra
+    </h1>
+
+    <button
+      type="button"
+      id="btn-abrir-modal-tema"
+      class="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 shadow-sm"
+    >
+      <span class="material-symbols-outlined text-base">add</span>
+      <span>Añadir nuevo tema</span>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Columna izquierda: listado de temas -->
+    <div class="lg:col-span-1">
+      <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 h-full">
+        <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">
+          Temas
+        </h3>
+
+        {% if temas %}
+          <div class="flex flex-col gap-2">
+            {% for t in temas %}
+              <a
+                href="{{ url_for('temas.gestion_temas', id_competencia=t.id_competencia) }}"
+                class="block px-3 py-2 rounded-lg text-sm font-medium
+                       {% if tema_activo and t.id_competencia == tema_activo.id_competencia %}
+                         bg-blue-50 text-blue-700 border border-blue-200
+                       {% else %}
+                         text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
+                       {% endif %}"
+              >
+                {{ t.area }}
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Aún no has registrado temas de álgebra.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Columna derecha: detalle del tema -->
+    <div class="lg:col-span-2 flex flex-col gap-6">
+      {% if tema_activo %}
+
+      {% set etiqueta_nivel_filtro = 'Todos' %}
+      {% if nivel_filtro == 1 %}
+        {% set etiqueta_nivel_filtro = 'Básico' %}
+      {% elif nivel_filtro == 2 %}
+        {% set etiqueta_nivel_filtro = 'Intermedio' %}
+      {% elif nivel_filtro == 3 %}
+        {% set etiqueta_nivel_filtro = 'Avanzado' %}
+      {% endif %}
+
+      <!-- Ficha tema -->
+      <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {{ tema_activo.area }}
+            </h2>
+            <p class="text-xs text-gray-500 mt-1">
+              Materiales mostrados para nivel:
+              <span class="font-semibold text-blue-600">
+                {{ etiqueta_nivel_filtro }}
+              </span>
+            </p>
+          </div>
+
+          {% if tema_activo.id_competencia not in base_competencias_ids %}
+          <form
+            action="{{ url_for('temas.eliminar_tema', id_competencia=tema_activo.id_competencia) }}"
+            method="post"
+            onsubmit="return confirm('¿Seguro que deseas eliminar este tema? Debe estar sin materiales asociados.');"
+          >
+            <button
+              type="submit"
+              class="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+            >
+              Eliminar tema
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+        <form
+          action="{{ url_for('temas.actualizar_tema', id_competencia=tema_activo.id_competencia) }}"
+          method="post"
+          class="space-y-4"
+        >
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-gray-800 dark:text-gray-200">
+              Título del tema
+            </label>
+            <input
+              type="text"
+              name="titulo_tema"
+              value="{{ tema_activo.area }}"
+              class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+              placeholder="Introduce el título del tema"
+              required
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-gray-800 dark:text-gray-200">
+              Descripción
+            </label>
+            <textarea
+              name="descripcion_tema"
+              rows="4"
+              class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+              placeholder="Añade una breve descripción del tema"
+            >{{ tema_activo.descripcion }}</textarea>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-gray-800 dark:text-gray-200">
+              Nivel del tema
+            </label>
+            <select
+              name="nivel_tema"
+              class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+            >
+              <option value="1" {% if tema_activo.nivel == 1 %}selected{% endif %}>Básico</option>
+              <option value="2" {% if tema_activo.nivel == 2 %}selected{% endif %}>Intermedio</option>
+              <option value="3" {% if tema_activo.nivel == 3 %}selected{% endif %}>Avanzado</option>
+            </select>
+          </div>
+
+          <div class="flex justify-end">
+            <button
+              type="submit"
+              class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+            >
+              Guardar cambios del tema
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Materiales -->
+      <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">
+            Materiales de Estudio
+          </h3>
+
+          <div class="flex items-center gap-3">
+            <!-- Filtro por nivel de material -->
+            <select
+              id="select-filtro-nivel"
+              class="h-9 text-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2"
+            >
+              <option value="" {% if not nivel_filtro %}selected{% endif %}>Todos los niveles</option>
+              <option value="1" {% if nivel_filtro == 1 %}selected{% endif %}>Básico</option>
+              <option value="2" {% if nivel_filtro == 2 %}selected{% endif %}>Intermedio</option>
+              <option value="3" {% if nivel_filtro == 3 %}selected{% endif %}>Avanzado</option>
+            </select>
+
+            <button
+              type="button"
+              id="btn-abrir-modal-material"
+              class="flex items-center gap-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2"
+            >
+              <span class="material-symbols-outlined text-base">add</span>
+              <span>Añadir material</span>
+            </button>
+          </div>
+        </div>
+
+        {% if materiales %}
+          <div class="space-y-3">
+            {% for m in materiales %}
+              {% set icono = 'videocam' %}
+              {% if m.tipo == 'pdf' %}
+                {% set icono = 'picture_as_pdf' %}
+              {% elif m.tipo == 'link' %}
+                {% set icono = 'link' %}
+              {% endif %}
+
+              {% set etiqueta_nivel = 'Sin nivel' %}
+              {% if m.nivel == 1 %}
+                {% set etiqueta_nivel = 'Básico' %}
+              {% elif m.nivel == 2 %}
+                {% set etiqueta_nivel = 'Intermedio' %}
+              {% elif m.nivel == 3 %}
+                {% set etiqueta_nivel = 'Avanzado' %}
+              {% endif %}
+
+              <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-blue-500">{{ icono }}</span>
+                  <div class="flex flex-col">
+                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {{ m.titulo }}
+                    </span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <span>Tipo: {{ m.tipo|capitalize }}</span>
+                      {% if m.tiempo_estimado %}
+                        <span>· Duración aprox.: {{ m.tiempo_estimado }} min</span>
+                      {% endif %}
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold
+                                   {% if m.nivel == 1 %}
+                                     bg-emerald-50 text-emerald-700
+                                   {% elif m.nivel == 2 %}
+                                     bg-amber-50 text-amber-700
+                                   {% elif m.nivel == 3 %}
+                                     bg-purple-50 text-purple-700
+                                   {% else %}
+                                     bg-gray-100 text-gray-600
+                                   {% endif %}">
+                        {{ etiqueta_nivel }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                    data-accion="editar-material"
+                    data-id-material="{{ m.id_material }}"
+                    data-titulo="{{ m.titulo }}"
+                    data-tipo="{{ m.tipo }}"
+                    data-url="{{ m.url }}"
+                    data-tiempo="{{ m.tiempo_estimado }}"
+                    data-nivel="{{ m.nivel }}"
+                  >
+                    <span class="material-symbols-outlined text-base text-gray-700 dark:text-gray-300">edit</span>
+                  </button>
+
+                  <form
+                    action="{{ url_for('temas.eliminar_material', id_material=m.id_material) }}"
+                    method="post"
+                    class="inline"
+                    onsubmit="return confirm('¿Seguro que deseas eliminar este material?');"
+                  >
+                    <button
+                      type="submit"
+                      class="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/40"
+                    >
+                      <span class="material-symbols-outlined text-base text-red-600">delete</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Este tema aún no tiene materiales de estudio para este filtro.
+            Añade videos, PDFs o enlaces para que el estudiante los vea en la app.
+          </p>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="lg:col-span-2">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          No hay temas registrados. Crea uno nuevo para empezar.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ========= MODAL NUEVO TEMA ========= -->
+<div
+  id="modal-tema-backdrop"
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center z-40"
+>
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 relative">
+    <h2 class="text-lg font-bold mb-4">Crear nuevo tema</h2>
+    <form method="post" action="{{ url_for('temas.crear_tema') }}" class="space-y-4">
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Título del tema
+        </label>
+        <input
+          type="text"
+          name="titulo_tema"
+          required
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+        />
+      </div>
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Descripción
+        </label>
+        <textarea
+          name="descripcion_tema"
+          rows="4"
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+          placeholder="Breve descripción del tema"
+        ></textarea>
+      </div>
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Nivel del tema
+        </label>
+        <select
+          name="nivel_tema"
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+        >
+          <option value="1">Básico</option>
+          <option value="2">Intermedio</option>
+          <option value="3">Avanzado</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-cerrar-modal-tema"
+          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+        >
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if tema_activo %}
+<!-- ========= MODAL NUEVO / EDITAR MATERIAL ========= -->
+<div
+  id="modal-material-backdrop"
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center z-40"
+>
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 relative">
+    <h2 id="modal-material-titulo" class="text-lg font-bold mb-4">
+      Añadir material
+    </h2>
+
+    <form id="form-material" method="post"
+          action="{{ url_for('temas.crear_material', id_competencia=tema_activo.id_competencia) }}"
+          class="space-y-4">
+      <input type="hidden" id="form-id-material" />
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Título del material
+        </label>
+        <input
+          type="text"
+          name="titulo_material"
+          id="form-titulo-material"
+          required
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Tipo
+        </label>
+        <select
+          name="tipo"
+          id="form-tipo-material"
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+          required
+        >
+          <option value="video">Video</option>
+          <option value="pdf">PDF</option>
+          <option value="link">Enlace</option>
+        </select>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          URL del recurso
+        </label>
+        <input
+          type="text"
+          name="url"
+          id="form-url-material"
+          required
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+          placeholder="https://..."
+        />
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Tiempo estimado (minutos)
+        </label>
+        <input
+          type="number"
+          name="tiempo_estimado"
+          id="form-tiempo-material"
+          min="0"
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Nivel del material
+        </label>
+        <select
+          name="nivel_material"
+          id="form-nivel-material"
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-background-light dark:bg-background-dark px-3 py-2 text-sm"
+        >
+          <option value="1" {% if tema_activo.nivel == 1 %}selected{% endif %}>Básico</option>
+          <option value="2" {% if tema_activo.nivel == 2 %}selected{% endif %}>Intermedio</option>
+          <option value="3" {% if tema_activo.nivel == 3 %}selected{% endif %}>Avanzado</option>
+        </select>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-cerrar-modal-material"
+          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+        >
+          Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  // ---------- Modal NUEVO TEMA ----------
+  const backdropTema = document.getElementById("modal-tema-backdrop");
+  const btnAbrirTema = document.getElementById("btn-abrir-modal-tema");
+  const btnCerrarTema = document.getElementById("btn-cerrar-modal-tema");
+
+  if (btnAbrirTema) {
+    btnAbrirTema.addEventListener("click", () => {
+      backdropTema.classList.remove("hidden");
+    });
+  }
+  if (btnCerrarTema) {
+    btnCerrarTema.addEventListener("click", () => {
+      backdropTema.classList.add("hidden");
+    });
+  }
+  if (backdropTema) {
+    backdropTema.addEventListener("click", (e) => {
+      if (e.target === backdropTema) {
+        backdropTema.classList.add("hidden");
+      }
+    });
+  }
+
+  // ---------- Modal MATERIAL ----------
+  const backdropMat = document.getElementById("modal-material-backdrop");
+  const btnAbrirMat = document.getElementById("btn-abrir-modal-material");
+  const btnCerrarMat = document.getElementById("btn-cerrar-modal-material");
+  const tituloModalMat = document.getElementById("modal-material-titulo");
+  const formMat = document.getElementById("form-material");
+  const campoIdMat = document.getElementById("form-id-material");
+  const campoTituloMat = document.getElementById("form-titulo-material");
+  const campoTipoMat = document.getElementById("form-tipo-material");
+  const campoUrlMat = document.getElementById("form-url-material");
+  const campoTiempoMat = document.getElementById("form-tiempo-material");
+  const campoNivelMat = document.getElementById("form-nivel-material");
+
+  function abrirModalNuevoMaterial() {
+    if (!backdropMat) return;
+    tituloModalMat.textContent = "Añadir material";
+    campoIdMat.value = "";
+    campoTituloMat.value = "";
+    campoTipoMat.value = "video";
+    campoUrlMat.value = "";
+    campoTiempoMat.value = "";
+    campoNivelMat.value = "{{ tema_activo.nivel if tema_activo else 1 }}";
+
+    formMat.action = "{{ url_for('temas.crear_material', id_competencia=tema_activo.id_competencia if tema_activo else 0) }}";
+
+    backdropMat.classList.remove("hidden");
+  }
+
+  function abrirModalEditarMaterial(btn) {
+    const idMat = btn.dataset.idMaterial;
+    const titulo = btn.dataset.titulo || "";
+    const tipo = btn.dataset.tipo || "video";
+    const url = btn.dataset.url || "";
+    const tiempo = btn.dataset.tiempo || "";
+    const nivel = btn.dataset.nivel || "{{ tema_activo.nivel if tema_activo else 1 }}";
+
+    tituloModalMat.textContent = "Editar material";
+    campoIdMat.value = idMat;
+    campoTituloMat.value = titulo;
+    campoTipoMat.value = tipo;
+    campoUrlMat.value = url;
+    campoTiempoMat.value = tiempo;
+    campoNivelMat.value = nivel;
+
+    formMat.action = "{{ url_for('temas.editar_material', id_material=0) }}".replace("0", idMat);
+
+    backdropMat.classList.remove("hidden");
+  }
+
+  if (btnAbrirMat && backdropMat) {
+    btnAbrirMat.addEventListener("click", abrirModalNuevoMaterial);
+    btnCerrarMat.addEventListener("click", () => backdropMat.classList.add("hidden"));
+    backdropMat.addEventListener("click", (e) => {
+      if (e.target === backdropMat) {
+        backdropMat.classList.add("hidden");
+      }
+    });
+
+    document.querySelectorAll("[data-accion='editar-material']").forEach((btn) => {
+      btn.addEventListener("click", () => abrirModalEditarMaterial(btn));
+    });
+  }
+
+  // ---------- Filtro de nivel de materiales ----------
+  const selectFiltroNivel = document.getElementById("select-filtro-nivel");
+  if (selectFiltroNivel && {{ 'true' if tema_activo else 'false' }}) {
+    selectFiltroNivel.addEventListener("change", () => {
+      const nivel = selectFiltroNivel.value;
+      const params = new URLSearchParams(window.location.search);
+
+      params.set("id_competencia", "{{ tema_activo.id_competencia if tema_activo else '' }}");
+
+      if (nivel) {
+        params.set("nivel_filtro", nivel);
+      } else {
+        params.delete("nivel_filtro");
+      }
+
+      window.location.href = "{{ url_for('temas.gestion_temas') }}?" + params.toString();
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "docente_base.html" %}
+
+{% block contenido %}
+<div class="max-w-4xl mx-auto">
+
+  <!-- Mensajes flash -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="space-y-2 mb-4">
+    {% for category, message in messages %}
+    <div class="rounded-md px-4 py-2 text-sm
+                {% if category == 'success' %} bg-green-100 text-green-800
+                {% elif category == 'danger' %} bg-red-100 text-red-800
+                {% else %} bg-gray-100 text-gray-800 {% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <div class="flex flex-wrap justify-between gap-3 p-4 mb-4">
+    <p class="text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em] min-w-48">
+      Mi Perfil
+    </p>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 md:p-6">
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-8">
+
+      <!-- Perfil + foto -->
+      <div class="flex p-2 md:p-4 @container">
+        <div class="flex w-full flex-col gap-4 @[520px]:flex-row @[520px]:justify-between @[520px]:items-center">
+
+          <div class="flex gap-4 items-center">
+            <div class="relative">
+              <div class="bg-center bg-no-repeat bg-cover rounded-full min-h-28 w-28 md:min-h-32 md:w-32"
+                   style="background-image: url('{{ foto_url }}');">
+              </div>
+
+              <!-- Botón cámara sobre la foto -->
+              <button type="button"
+                      id="btnCambiarFoto2"
+                      class="absolute bottom-1 right-1 flex items-center justify-center size-8 bg-primary text-white rounded-full hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                <span class="material-symbols-outlined text-base">photo_camera</span>
+              </button>
+
+              <!-- Input real de archivo -->
+              <input id="fotoInput" name="foto" type="file" accept="image/*" class="hidden" />
+            </div>
+
+            <div class="flex flex-col justify-center">
+              <p class="text-[20px] md:text-[22px] font-bold leading-tight tracking-[-0.015em]">
+                {{ nombre_completo }}
+              </p>
+              <p class="text-gray-500 dark:text-gray-400 text-sm md:text-base leading-normal">
+                {{ correo }}
+              </p>
+            </div>
+          </div>
+
+          <button type="button"
+                  id="btnCambiarFoto"
+                  class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-gray-200 dark:bg-gray-700 text-sm font-bold">
+            <span class="truncate">Cambiar foto</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Datos personales -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 px-2 md:px-4">
+        <label class="flex flex-col flex-1">
+          <p class="text-base font-medium pb-2">Nombre(s)</p>
+          <input
+              name="nombre"
+              value="{{ nombre }}"
+              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg
+                     text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50
+                     border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-background-dark
+                     h-12 md:h-14 placeholder:text-gray-500 p-3 md:p-[15px] text-base" />
+        </label>
+
+        <label class="flex flex-col flex-1">
+          <p class="text-base font-medium pb-2">Apellidos</p>
+          <input
+              name="apellidos"
+              value="{{ apellidos }}"
+              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg
+                     text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50
+                     border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-background-dark
+                     h-12 md:h-14 placeholder:text-gray-500 p-3 md:p-[15px] text-base" />
+        </label>
+
+        <label class="flex flex-col flex-1">
+          <p class="text-base font-medium pb-2">Correo Electrónico</p>
+          <input
+              value="{{ correo }}"
+              disabled
+              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg
+                     text-gray-400 dark:text-gray-500 focus:outline-0
+                     border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700
+                     h-12 md:h-14 p-3 md:p-[15px] text-base cursor-not-allowed" />
+        </label>
+
+        <label class="flex flex-col flex-1">
+          <p class="text-base font-medium pb-2">Especialidad</p>
+          <input
+              name="especialidad"
+              value="{{ especialidad }}"
+              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg
+                     text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50
+                     border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-background-dark
+                     h-12 md:h-14 placeholder:text-gray-500 p-3 md:p-[15px] text-base" />
+        </label>
+      </div>
+
+      <!-- Seguridad -->
+      <div class="px-2 md:px-4">
+        <h3 class="text-lg font-semibold mb-4">Seguridad</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label class="flex flex-col">
+            <p class="text-base font-medium pb-2">Nueva contraseña</p>
+            <input
+                type="password"
+                name="nueva_contrasena"
+                placeholder="Dejar vacío para no cambiarla"
+                class="form-input w-full rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-background-light dark:bg-background-dark h-12 md:h-14 p-3 text-base" />
+          </label>
+
+          <label class="flex flex-col">
+            <p class="text-base font-medium pb-2">Confirmar contraseña</p>
+            <input
+                type="password"
+                name="confirmar_contrasena"
+                placeholder="Repite la nueva contraseña"
+                class="form-input w-full rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-background-light dark:bg-background-dark h-12 md:h-14 p-3 text-base" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex flex-col md:flex-row md:justify-end gap-3 md:gap-4 p-2 md:p-4">
+        <a
+            href="{{ url_for('docentes.dashboard') }}"
+            class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg
+                   h-11 md:h-12 px-4 md:px-6 bg-danger/20 text-danger text-base font-bold hover:bg-danger/30 text-center">
+          <span class="truncate w-full">Cancelar</span>
+        </a>
+
+        <button
+            type="submit"
+            class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg
+                   h-11 md:h-12 px-4 md:px-6 bg-primary text-white text-base font-bold hover:bg-primary/90">
+          <span class="truncate">Guardar Cambios</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  // Disparar el input file desde los botones "Cambiar foto"
+  const fotoInput = document.getElementById("fotoInput");
+  const btn1 = document.getElementById("btnCambiarFoto");
+  const btn2 = document.getElementById("btnCambiarFoto2");
+
+  if (btn1 && fotoInput) {
+    btn1.addEventListener("click", () => fotoInput.click());
+  }
+  if (btn2 && fotoInput) {
+    btn2.addEventListener("click", () => fotoInput.click());
+  }
+</script>
+{% endblock %}

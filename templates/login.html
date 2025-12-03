@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Inicio de Sesión - Sistema de Álgebra</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#137fec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            "xl": "0.75rem",
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark">
+  <div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+
+      <!-- Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-xl shadow-lg px-8 py-8 md:py-10 flex flex-col items-center gap-6">
+
+        <!-- Icono -->
+        <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+          <svg class="h-7 w-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 7h6m0 10v-3.333A1.667 1.667 0 0013.333 12H10.667A1.667 1.667 0 009 13.667V17m0-10V4a2 2 0 012-2h2a2 2 0 012 2v3m-6 0h6"
+                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </div>
+
+        <!-- Títulos -->
+        <div class="text-center space-y-1">
+          <p class="text-2xl md:text-3xl font-black text-slate-900 dark:text-slate-50 leading-tight">
+            Bienvenido al Sistema de Álgebra
+          </p>
+          <p class="text-sm md:text-base text-slate-500 dark:text-slate-400">
+            Acceso para profesores y directivos
+          </p>
+        </div>
+
+        <!-- Mensajes flash (solo errores) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="w-full mb-2">
+              {% for category, message in messages %}
+                {% if category == 'danger' %}
+                  <div class="rounded-lg px-3 py-2 text-sm bg-red-100 text-red-800 border border-red-200">
+                    {{ message }}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- FORMULARIO -->
+        <form method="POST" action="{{ url_for('auth.login') }}" class="w-full flex flex-col gap-4">
+
+          <!-- Usuario -->
+          <div class="w-full">
+            <label class="block text-sm font-medium text-slate-800 dark:text-slate-100 mb-1.5">
+              Usuario
+            </label>
+            <input
+              class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-background-light dark:bg-slate-950 text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-primary/60 focus:border-primary h-12 px-3 text-sm md:text-base placeholder:text-slate-400"
+              placeholder="Introduce tu usuario (correo)"
+              name="correo"
+              type="email"
+              required
+            />
+          </div>
+
+          <!-- Contraseña con icono de ojo -->
+          <div class="w-full">
+            <label class="block text-sm font-medium text-slate-800 dark:text-slate-100 mb-1.5">
+              Contraseña
+            </label>
+
+            <div class="relative">
+              <input
+                id="passwordInput"
+                class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-background-light dark:bg-slate-950 text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-primary/60 focus:border-primary h-12 px-3 pr-12 text-sm md:text-base placeholder:text-slate-400"
+                placeholder="Introduce tu contraseña"
+                type="password"
+                name="contrasena"
+                required
+              />
+
+              <!-- Botón del ojo -->
+              <button
+                type="button"
+                id="togglePassword"
+                class="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                tabindex="-1"
+              >
+                <!-- Ícono Ojo -->
+                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                     class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Recordar / olvidó -->
+          <div class="flex items-center justify-between text-sm mt-1">
+            <label class="inline-flex items-center gap-2 text-slate-700 dark:text-slate-200">
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary/60"
+              />
+              <span>Recordar sesión</span>
+            </label>
+            <a href="{{ url_for('auth.forgot_password') }}" class="text-primary hover:underline">
+            ¿Olvidó su contraseña?
+            </a>
+
+          </div>
+
+          <!-- Botones -->
+          <div class="flex flex-col gap-3 mt-2">
+            <!-- Iniciar sesión -->
+            <button
+              type="submit"
+              class="inline-flex justify-center items-center h-11 rounded-lg bg-primary text-white font-semibold text-sm md:text-base hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background-light">
+              Iniciar sesión
+            </button>
+
+            <!-- Registrarse (luego lo conectamos) -->
+            <a
+            href="{{ url_for('auth.register') }}"
+            class="inline-flex justify-center items-center h-11 rounded-lg border border-slate-300 dark:border-slate-600 text-primary font-semibold text-sm md:text-base bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800">
+            Registrarse
+            </a>
+
+          </div>
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT: Toggle password -->
+  <script>
+    const passwordInput = document.getElementById("passwordInput");
+    const togglePassword = document.getElementById("togglePassword");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    if (passwordInput && togglePassword && eyeIcon) {
+      togglePassword.addEventListener("click", () => {
+        const isPassword = passwordInput.type === "password";
+        passwordInput.type = isPassword ? "text" : "password";
+
+        // Cambia el ícono según estado (opcionalmente podrías modificarlo)
+        // Aquí solo dejamos el mismo ojo para que no se deforme.
+      });
+    }
+  </script>
+</body>
+</html>

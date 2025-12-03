@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro de usuario - Sistema de Álgebra</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+
+    <!-- Íconos Material -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-[Inter]">
+
+    <div class="flex flex-col items-center justify-center min-h-screen px-4">
+
+        <h1 class="text-3xl font-black text-gray-800 mb-2">
+            Crea tu cuenta en el sistema
+        </h1>
+        <p class="text-gray-600 mb-6 text-center">
+            Regístrate como docente para gestionar el aprendizaje de álgebra.
+        </p>
+
+        <!-- FORMULARIO -->
+        <div class="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
+
+            <form method="POST">
+
+                <!-- Nombre -->
+                <label class="block mb-4">
+                    <p class="font-medium mb-1">Nombre(s)</p>
+                    <input
+                        type="text"
+                        name="nombre"
+                        class="form-input w-full h-12 rounded-lg border-gray-300"
+                        placeholder="Ej: Juan"
+                        value="{{ form_data.nombre or '' }}"
+                    >
+                </label>
+
+                <!-- Apellidos -->
+                <label class="block mb-4">
+                    <p class="font-medium mb-1">Apellidos</p>
+                    <input
+                        type="text"
+                        name="apellidos"
+                        class="form-input w-full h-12 rounded-lg border-gray-300"
+                        placeholder="Ej: Pérez Gómez"
+                        value="{{ form_data.apellidos or '' }}"
+                    >
+                </label>
+
+                <!-- Correo -->
+                <label class="block mb-4">
+                    <p class="font-medium mb-1">Correo Electrónico</p>
+                    <input
+                        type="email"
+                        name="correo"
+                        class="form-input w-full h-12 rounded-lg border-gray-300"
+                        placeholder="tu@email.com"
+                        value="{{ form_data.correo or '' }}"
+                    >
+                </label>
+
+                <!-- Rol oculto: siempre docente -->
+                <input type="hidden" name="rol" value="docente">
+
+                <!-- Contraseña -->
+                <label class="block mb-4">
+                    <p class="font-medium mb-1">Contraseña</p>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            name="contrasena"
+                            id="password"
+                            class="form-input w-full h-12 rounded-lg border-gray-300 pr-12"
+                            placeholder="Mínimo 6 caracteres"
+                        >
+                        <span
+                            class="material-symbols-outlined absolute right-4 top-3 cursor-pointer"
+                            onclick="togglePassword('password', this)"
+                        >
+                            visibility_off
+                        </span>
+                    </div>
+                </label>
+
+                <!-- Confirmar contraseña -->
+                <label class="block mb-6">
+                    <p class="font-medium mb-1">Confirmar Contraseña</p>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            name="confirmar_contrasena"
+                            id="confirm_password"
+                            class="form-input w-full h-12 rounded-lg border-gray-300 pr-12"
+                            placeholder="Repite tu contraseña"
+                        >
+                        <span
+                            class="material-symbols-outlined absolute right-4 top-3 cursor-pointer"
+                            onclick="togglePassword('confirm_password', this)"
+                        >
+                            visibility_off
+                        </span>
+                    </div>
+                </label>
+
+                <!-- Botón -->
+                <button
+                    type="submit"
+                    class="w-full h-12 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700"
+                >
+                    Registrarse
+                </button>
+
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('auth.login') }}" class="text-blue-600 font-medium hover:underline">
+                    ¿Ya tienes una cuenta? Inicia sesión
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Mostrar / ocultar contraseña -->
+    <script>
+        function togglePassword(id, icon) {
+            const field = document.getElementById(id);
+
+            if (field.type === "password") {
+                field.type = "text";
+                icon.textContent = "visibility";
+            } else {
+                field.type = "password";
+                icon.textContent = "visibility_off";
+            }
+        }
+    </script>
+
+</body>
+</html>

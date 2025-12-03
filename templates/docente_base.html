@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Panel del Docente{% endblock %}</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Íconos -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+    rel="stylesheet"
+  />
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["Inter", "system-ui", "sans-serif"],
+          },
+          colors: {
+            primary: "#2563EB",
+            secondary: "#22C55E",
+            accent: "#F97316",
+            "background-light": "#F4F7FB",
+            "background-dark": "#101922",
+            "text-light": "#111827",
+            "text-dark": "#F9FAFB",
+            danger: "#E11D48",
+            success: "#16A34A",
+          },
+          boxShadow: {
+            card: "0 10px 25px rgba(15, 23, 42, 0.08)",
+          },
+          borderRadius: {
+            xl: "0.9rem",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark"
+>
+  <div class="relative flex min-h-screen w-full overflow-x-hidden">
+    <!-- SIDEBAR -->
+    <aside
+      class="flex flex-col w-64 bg-white dark:bg-background-dark border-r border-gray-200 dark:border-gray-700 p-4"
+    >
+      <!-- PARTE SUPERIOR (perfil + menú) -->
+      <div class="flex-1">
+        <!-- Perfil corto del docente -->
+        <div class="flex items-center gap-3 mb-6">
+          <img
+            src="{{ url_for('static', filename='fotos_perfil/user_' ~ session.get('user_id', 0) ~ '.jpg') }}"
+            onerror="this.onerror=null;this.src='{{ url_for('static', filename='fotos_perfil/user_4.jpg') }}';"
+            alt="Foto de perfil"
+            class="h-12 w-12 rounded-full object-cover border border-gray-200"
+          />
+          <div class="flex flex-col">
+            <span class="font-semibold text-sm text-gray-900 dark:text-white">
+              {{ session.get('user_name', 'Profesor') }}
+            </span>
+            <span class="text-xs text-gray-500">
+              {{ session.get('user_rol', 'Álgebra') }}
+            </span>
+          </div>
+        </div>
+
+        {% set ap = active_page|default('') %}
+
+        <!-- Navegación -->
+        <nav class="space-y-1">
+          <!-- Panel de Control -->
+          <a
+            href="{{ url_for('docentes.dashboard') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {% if ap == 'dashboard' %}
+                bg-primary/10 text-primary font-semibold
+              {% else %}
+                text-gray-700 hover:bg-gray-100
+              {% endif %}"
+          >
+            <span class="material-symbols-outlined text-base">dashboard</span>
+            <span>Panel de Control</span>
+          </a>
+
+          <!-- Gestión de Estudiantes -->
+          <a
+            href="{{ url_for('docentes.gestion_estudiantes') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {% if ap == 'estudiantes' %}
+                bg-primary/10 text-primary font-semibold
+              {% else %}
+                text-gray-700 hover:bg-gray-100
+              {% endif %}"
+          >
+            <span class="material-symbols-outlined text-base">group</span>
+            <span>Gestión de Estudiantes</span>
+          </a>
+
+          <!-- Gestión de Salones -->
+          <a
+            href="{{ url_for('salones.gestion_salones') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {% if ap == 'salones' %}
+                bg-primary/10 text-primary font-semibold
+              {% else %}
+                text-gray-700 hover:bg-gray-100
+              {% endif %}"
+          >
+            <span class="material-symbols-outlined text-base">class</span>
+            <span>Gestión de Salones</span>
+          </a>
+
+          <!-- Catálogo de Temas -->
+          <a
+            href="{{ url_for('temas.gestion_temas') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {% if ap == 'temas' %}
+                bg-primary/10 text-primary font-semibold
+              {% else %}
+                text-gray-700 hover:bg-gray-100
+              {% endif %}"
+          >
+            <span class="material-symbols-outlined text-base">menu_book</span>
+            <span>Catálogo de Temas</span>
+          </a>
+
+          <!-- Gestión de Ejercicios -->
+          <a
+            href="{{ url_for('ejercicios.gestion_ejercicios') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {% if ap == 'ejercicios' %}
+                bg-primary/10 text-primary font-semibold
+              {% else %}
+                text-gray-700 hover:bg-gray-100
+              {% endif %}"
+          >
+            <span class="material-symbols-outlined text-base">calculate</span>
+            <span>Gestión de Ejercicios</span>
+          </a>
+
+          <!-- Reportes Detallados -->
+          <a
+            href="{{ url_for('reportes.reporte_progreso') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {% if ap == 'reportes' %}
+                bg-primary/10 text-primary font-semibold
+              {% else %}
+                text-gray-700 hover:bg-gray-100
+              {% endif %}"
+          >
+            <span class="material-symbols-outlined text-base">bar_chart</span>
+            <span>Reportes Detallados</span>
+          </a>
+
+          <!-- Perfil del Profesor -->
+          <a
+            href="{{ url_for('docentes.perfil') }}"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+              {% if ap == 'perfil' %}
+                bg-primary/10 text-primary font-semibold
+              {% else %}
+                text-gray-700 hover:bg-gray-100
+              {% endif %}"
+          >
+            <span class="material-symbols-outlined text-base">person</span>
+            <span>Perfil del Profesor</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- BOTÓN CERRAR SESIÓN (GET) -->
+      <div class="mt-6">
+        <a
+          href="{{ url_for('auth.logout') }}"
+          class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg
+            text-sm font-semibold text-danger hover:bg-red-50"
+        >
+          <span class="material-symbols-outlined text-base">logout</span>
+          <span>Cerrar Sesión</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="flex-1 flex flex-col">
+      <!-- Header -->
+      <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200
+          dark:border-gray-700 px-6 py-4 bg-white dark:bg-background-dark shadow-sm"
+      >
+        <div class="flex flex-col">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {{ titulo_pagina or 'Panel de Control' }}
+          </h1>
+        </div>
+      </header>
+
+      <main
+        class="flex-1 bg-background-light dark:bg-background-dark p-4 sm:p-6 lg:p-8"
+      >
+        <div class="max-w-[1200px] mx-auto">
+          {% block contenido %}{% endblock %}
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
