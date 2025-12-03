@@ -7,11 +7,17 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # Cerrar conexión a la BD al final de cada request
     app.teardown_appcontext(close_db)
+
+    # Registrar todos tus blueprints (auth, docentes, etc.)
     register_blueprints(app)
 
     @app.route("/ping-db")
     def ping_db():
+        """
+        Ruta de prueba para ver si la BD responde.
+        """
         conn = get_db()
         cur = conn.cursor()
         cur.execute("SELECT version();")
@@ -21,10 +27,14 @@ def create_app():
 
     @app.route("/")
     def index():
+        # Redirige al login de tu sistema
         return redirect(url_for("auth.login"))
 
     return app
 
+# Instancia global que usará gunicorn: app:app
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
+    # Modo desarrollo local
     app.run(debug=True)
