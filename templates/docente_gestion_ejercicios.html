@@ -267,7 +267,7 @@
   });
 
   // ---- EDITAR: cargar datos en el formulario ----
-  const urlDetalleBase = "{{ url_for('ejercicios.detalle_ejercicio_json', id_ejercicio=0) }}";
+    const urlDetalleBase = "{{ url_for('ejercicios.detalle_ejercicio_json', id_ejercicio=0) }}";
 
   document.querySelectorAll("[data-accion='editar-ejercicio']").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -287,17 +287,31 @@
           document.getElementById("rapido-id-competencia").value = data.id_competencia || "";
           document.getElementById("rapido-pista").value = data.pista || "";
 
-          // limpiar opciones y radio
-          document.querySelectorAll("input[name^='opcion_']").forEach(i => i.value = "");
-          document.querySelectorAll("input[name='opcion_correcta']").forEach(r => {
-            r.checked = (data.respuesta_correcta && r.value === data.respuesta_correcta);
+          // Opciones A–D
+          ["A", "B", "C", "D"].forEach(letra => {
+            const input = document.querySelector(`input[name="opcion_${letra}"]`);
+            if (input) {
+              input.value = (data.opciones && data.opciones[letra]) || "";
+            }
           });
 
-          document.getElementById("form-ejercicio-rapido")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Radios
+          document
+            .querySelectorAll("input[name='opcion_correcta']")
+            .forEach(r => {
+              r.checked =
+                data.respuesta_correcta &&
+                r.value === data.respuesta_correcta;
+            });
+
+          document
+            .getElementById("form-ejercicio-rapido")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
         })
         .catch(() => {
           alert("Error al comunicarse con el servidor.");
         });
+
     });
   });
 </script>

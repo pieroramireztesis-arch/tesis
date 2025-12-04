@@ -81,7 +81,6 @@ def gestion_ejercicios():
         active_page="ejercicios",
     )
 
-
 # ===================== CREAR / ACTUALIZAR =====================
 @bp_ejercicios.route("/crear", methods=["POST"])
 def crear_ejercicio():
@@ -94,9 +93,12 @@ def crear_ejercicio():
 
     id_ejercicio_raw = request.form.get("id_ejercicio", "").strip()
     descripcion = request.form.get("descripcion", "").strip()
-    respuesta = request.form.get("opcion_correcta")  # letra A/B/C/D
     id_competencia = request.form.get("id_competencia")
     pista = request.form.get("pista", "").strip()
+
+    # Letra A/B/C/D marcada como correcta
+    respuesta = request.form.get("opcion_correcta")
+
     archivo = request.files.get("imagen_ejercicio")  # nombre del input del HTML
 
     if not descripcion or not id_competencia:
@@ -106,11 +108,30 @@ def crear_ejercicio():
     conn = get_db()
     cur = conn.cursor()
 
-    # ¿INSERT o UPDATE?
     es_update = bool(id_ejercicio_raw)
     id_ej = None
 
     try:
+        # --------- Validar respuesta correcta ----------
+        if not respuesta:
+            # Si es edición, intentamos conservar la anterior
+            if es_update:
+                cur.execute(
+                    "SELECT respuesta_correcta FROM ejercicios WHERE id_ejercicio = %s",
+                    (int(id_ejercicio_raw),),
+                )
+                fila_resp = cur.fetchone()
+                if fila_resp:
+                    respuesta = fila_resp[0]
+
+            # Si sigue sin haber respuesta, no continuamos
+            if not respuesta:
+                flash("Debes marcar cuál opción es la correcta (A, B, C o D).", "danger")
+                conn.rollback()
+                cur.close()
+                return redirect(url_for("ejercicios.gestion_ejercicios"))
+
+        # --------- INSERT o UPDATE de ejercicios ----------
         if es_update:
             id_ej = int(id_ejercicio_raw)
             cur.execute(
@@ -133,10 +154,9 @@ def crear_ejercicio():
                 """,
                 (descripcion, respuesta, id_competencia, pista),
             )
-            fila = cur.fetchone()
-            id_ej = fila[0]
+            id_ej = cur.fetchone()[0]
 
-        # ---------- Guardar imagen si viene (para nuevo o editado) ----------
+        # ---------- Guardar imagen si viene ----------
         if archivo and allowed_file(archivo.filename):
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -150,13 +170,7 @@ def crear_ejercicio():
                 (img_url, id_ej),
             )
 
-        # ---------- GUARDAR OPCIONES A–D EN LA TABLA opciones_ejercicio ----------
-        # Borrar opciones anteriores si es UPDATE (o por seguridad en nuevo)
-        cur.execute(
-            "DELETE FROM opciones_ejercicio WHERE id_ejercicio = %s",
-            (id_ej,),
-        )
-
+        # ---------- GUARDAR / ACTUALIZAR OPCIONES A–D ----------
         opciones = {
             "A": request.form.get("opcion_A", "").strip(),
             "B": request.form.get("opcion_B", "").strip(),
@@ -164,22 +178,39 @@ def crear_ejercicio():
             "D": request.form.get("opcion_D", "").strip(),
         }
 
-        respuesta_correcta = respuesta  # letra A/B/C/D
+        # Traer qué letras ya existen para este ejercicio
+        cur.execute(
+            "SELECT letra FROM opciones_ejercicio WHERE id_ejercicio = %s",
+            (id_ej,),
+        )
+        letras_existentes = {fila[0] for fila in cur.fetchall()}  # {'A','B',...}
 
         for letra, texto in opciones.items():
-            if texto != "":
+            es_corr = (letra == respuesta)
+
+            if letra in letras_existentes:
+                # Ya existe: solo actualizamos texto y es_correcta
                 cur.execute(
                     """
-                    INSERT INTO opciones_ejercicio (letra, descripcion, es_correcta, id_ejercicio)
-                    VALUES (%s, %s, %s, %s)
+                    UPDATE opciones_ejercicio
+                    SET descripcion = %s,
+                        es_correcta = %s
+                    WHERE id_ejercicio = %s
+                      AND letra = %s
                     """,
-                    (
-                        letra,
-                        texto,
-                        letra == respuesta_correcta,
-                        id_ej,
-                    ),
+                    (texto, es_corr, id_ej, letra),
                 )
+            else:
+                # No existe para este ejercicio: la insertamos si tiene texto
+                if texto != "":
+                    cur.execute(
+                        """
+                        INSERT INTO opciones_ejercicio (letra, descripcion, es_correcta, id_ejercicio)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (letra, texto, es_corr, id_ej),
+                    )
+                # Si no hay texto y no existía, no insertamos nada
 
         # ---------- COMMIT ----------
         conn.commit()
@@ -233,14 +264,9 @@ def eliminar_ejercicio(id_ejercicio):
 
     return redirect(url_for("ejercicios.gestion_ejercicios"))
 
-
 # ===================== DETALLE JSON (para EDITAR) =====================
 @bp_ejercicios.route("/detalle/<int:id_ejercicio>")
 def detalle_ejercicio_json(id_ejercicio):
-    """
-    Devuelve un JSON con los datos del ejercicio para rellenar el formulario
-    de edición rápida mediante fetch().
-    """
     if "user_id" not in session or session.get("user_rol") != "docente":
         return jsonify({"error": "No autorizado"}), 401
 
@@ -250,29 +276,44 @@ def detalle_ejercicio_json(id_ejercicio):
     cur.execute(
         """
         SELECT 
-            id_ejercicio,       -- 0
-            descripcion,        -- 1
-            id_competencia,     -- 2
-            respuesta_correcta, -- 3
-            pista               -- 4
+            id_ejercicio,
+            descripcion,
+            id_competencia,
+            respuesta_correcta,
+            pista
         FROM ejercicios
         WHERE id_ejercicio = %s
         """,
         (id_ejercicio,),
     )
     ej = cur.fetchone()
-    cur.close()
 
     if not ej:
+        cur.close()
         return jsonify({"error": "Ejercicio no encontrado"}), 404
+
+    # Opciones A–D
+    cur.execute(
+        """
+        SELECT letra, descripcion
+        FROM opciones_ejercicio
+        WHERE id_ejercicio = %s
+        ORDER BY letra
+        """,
+        (id_ejercicio,),
+    )
+    filas_opt = cur.fetchall()
+    cur.close()
+
+    opciones = {fila[0]: fila[1] for fila in filas_opt}
 
     data = {
         "id_ejercicio": ej[0],
         "descripcion": ej[1],
         "id_competencia": ej[2],
-        "respuesta_correcta": ej[3],
+        "respuesta_correcta": ej[3],  # 'A','B','C','D'
         "pista": ej[4],
-        "opciones": {},  # si luego quieres, aquí se puede devolver también las opciones
+        "opciones": opciones,         # {"A": "texto", ...}
     }
 
     return jsonify(data)

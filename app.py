@@ -36,5 +36,8 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    # Modo desarrollo local
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",   # <- IMPORTANTE, no dejar 127.0.0.1
+        port=5000,
+        debug=True
+    )

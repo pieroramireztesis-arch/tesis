@@ -1,13 +1,24 @@
 import os
 
 class Config:
-    # Clave secreta para Flask (úsala desde variables de entorno en Render)
+    # ============================
+    #  🔐 Clave de sesión de Flask
+    # ============================
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key")
 
-    # URL completa de la base de datos (Render: DATABASE_URL)
-    DATABASE_URL = os.environ.get("DATABASE_URL")
+    # ===========================================
+    #  🔗 Cadena de conexión a la base de datos
+    #  En local usa el valor por defecto.
+    #  En Render usa la variable DATABASE_URL
+    # ===========================================
+    DATABASE_URL = os.environ.get(
+        "DATABASE_URL",
+        "postgresql://postgres:hola1@localhost:5432/bd_ejemplo"
+    )
 
-    # Configuración de correo (idealmente también en variables de entorno)
+    # ============================
+    #  📧 Configuración de correo
+    # ============================
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 465
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "ww.sco.lol@gmail.com")
