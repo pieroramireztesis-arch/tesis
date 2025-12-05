@@ -17,8 +17,8 @@ def reporte_progreso():
     """
     Reporte de progreso del estudiante.
     - Filtros de salón y estudiante
-    - Progreso general
-    - Progreso por competencia (porcentaje de aciertos)
+    - Progreso general (ponderado, igual que /progreso/resumen)
+    - Progreso por competencia (ponderado, igual que /progreso/por_competencia)
     - Historial de actividades
     - Datos para gráfico histórico tipo heatmap
     """
@@ -122,33 +122,86 @@ def reporte_progreso():
         None
     )
 
-        # 5) Progreso general (promedio de PUNTAJES 0..100, igual que la API)
+    # ======================================================
+    # 5) Progreso general (MISMA LÓGICA QUE /progreso/resumen)
+    #    - Pondera ejercicios nuevos y repetidos:
+    #      nuevo = 1.0, repetido = 0.30
+    # ======================================================
+    PESO_NUEVO = 1.0
+    PESO_REPETIDO = 0.30
+
     cur.execute(
         """
-        SELECT COALESCE(AVG(p.puntaje), 0) AS promedio
-        FROM puntajes p
-        WHERE p.id_estudiante = %s
+        SELECT
+            COUNT(DISTINCT e.id_ejercicio) AS total_ejercicios,
+
+            -- ejercicios distintos correctos
+            COUNT(
+                DISTINCT CASE WHEN o.es_correcta = TRUE THEN r.id_ejercicio END
+            ) AS distintos_correctos,
+
+            -- correctos totales (incluye refuerzos)
+            COUNT(
+                CASE WHEN o.es_correcta = TRUE THEN 1 END
+            ) AS correctos_totales
+
+        FROM ejercicios e
+        LEFT JOIN respuestas_estudiantes r
+            ON r.id_ejercicio = e.id_ejercicio
+           AND r.id_estudiante = %s
+        LEFT JOIN opciones_ejercicio o
+            ON o.id_opcion = r.id_opcion
         """,
         (id_est_sel,),
     )
-    row_pg = cur.fetchone()
-    promedio = row_pg[0] if row_pg and row_pg[0] is not None else 0
-    progreso_general = int(round(float(promedio)))
+    row_pg = cur.fetchone() or (0, 0, 0)
+
+    total = row_pg[0] or 0
+    distintos_correctos = row_pg[1] or 0
+    correctos_totales = row_pg[2] or 0
+
+    repetidos = max(0, correctos_totales - distintos_correctos)
+
+    if total > 0:
+        puntaje = (
+            distintos_correctos * PESO_NUEVO +
+            repetidos * PESO_REPETIDO
+        ) / float(total)
+    else:
+        puntaje = 0.0
+
+    progreso_general = int(round(puntaje * 100))
     if progreso_general < 0:
         progreso_general = 0
     if progreso_general > 100:
         progreso_general = 100
 
-    # 6) Progreso por competencia (mismo criterio que /progreso/por_competencia de la API)
+    # ======================================================
+    # 6) Progreso por competencia (MISMA LÓGICA QUE /progreso/por_competencia)
+    # ======================================================
     cur.execute(
         """
         SELECT
             c.area,
-            COALESCE(AVG(p.puntaje), 0) AS promedio
+            COUNT(DISTINCT e.id_ejercicio) AS total,
+
+            COUNT(
+                DISTINCT CASE WHEN o.es_correcta = TRUE THEN r.id_ejercicio END
+            ) AS distintos_correctos,
+
+            COUNT(
+                CASE WHEN o.es_correcta = TRUE THEN 1 END
+            ) AS correctos_totales
+
         FROM competencias c
-        LEFT JOIN puntajes p
-               ON p.id_competencia = c.id_competencia
-              AND p.id_estudiante = %s
+        LEFT JOIN ejercicios e
+            ON e.id_competencia = c.id_competencia
+        LEFT JOIN respuestas_estudiantes r
+            ON r.id_ejercicio = e.id_ejercicio
+           AND r.id_estudiante = %s
+        LEFT JOIN opciones_ejercicio o
+            ON o.id_opcion = r.id_opcion
+        WHERE c.id_competencia BETWEEN 1 AND 4
         GROUP BY c.id_competencia, c.area
         ORDER BY c.id_competencia
         """,
@@ -156,15 +209,31 @@ def reporte_progreso():
     )
 
     progreso_competencias = {}
-    for area, promedio in cur.fetchall():
-        if promedio is None:
-            porcentaje_int = 0
+    filas_comp = cur.fetchall()
+    for fila in filas_comp:
+        area = fila[0]
+        total_c = fila[1] or 0
+        d_correctos = fila[2] or 0
+        t_correctos = fila[3] or 0
+
+        repetidos_c = max(0, t_correctos - d_correctos)
+
+        if total_c > 0:
+            puntaje_c = (
+                d_correctos * PESO_NUEVO +
+                repetidos_c * PESO_REPETIDO
+            ) / float(total_c)
         else:
-            porcentaje_int = int(round(float(promedio)))
+            puntaje_c = 0.0
+
+        porcentaje_int = int(round(puntaje_c * 100))
         porcentaje_int = max(0, min(100, porcentaje_int))
+
         progreso_competencias[area] = porcentaje_int
-        
+
+    # ======================================================
     # 7) Historial de actividades
+    # ======================================================
     #    a) Respuestas a ejercicios
     cur.execute(
         """
@@ -244,7 +313,6 @@ def reporte_progreso():
     historial.sort(key=lambda x: x["fecha"], reverse=True)
     historial = historial[:50]  # un poco más largo para el gráfico
 
-
     # 8) Valores para el gráfico histórico tipo heatmap
     valores_heatmap = [
         (h["puntaje"] or 0)
@@ -271,7 +339,6 @@ def reporte_progreso():
         historial=historial[:15],   # en la tabla solo mostramos 15
         valores_heatmap=valores_heatmap,
     )
-
 
 
 @bp_reportes.route("/respuesta/<int:id_respuesta>/imagen")
@@ -317,6 +384,7 @@ def ver_imagen_respuesta(id_respuesta):
 
     flash("Esta respuesta no tiene desarrollo asociado.", "error")
     return redirect(url_for("reportes.reporte_progreso"))
+
 
 # Puedes dejar este stub o eliminarlo; ahora el botón usa window.print()
 @bp_reportes.route("/progreso/pdf")
